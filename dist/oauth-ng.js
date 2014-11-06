@@ -1,4 +1,4 @@
-/* oauth-ng - v0.3.0 - 2014-10-31 */
+/* oauth-ng - v0.3.1 - 2014-11-05 */
 
 'use strict';
 
@@ -42,7 +42,7 @@ accessTokenService.factory('AccessToken', function($rootScope, $location, $sessi
      * - takes the token from the fragment URI
      * - takes the token from the sessionStorage
      */
-    service.set = function(){
+    service.set = function(callback){
 
         // if html5mode ...
         if ($location.$$html5) {
@@ -50,9 +50,15 @@ accessTokenService.factory('AccessToken', function($rootScope, $location, $sessi
             this.setTokenFromString($location.hash());
         } else {
             // ... else set it from the path
-            this.setTokenFromString($location.path().substr(1));
-            $location.path('/');
-            $location.replace();
+            var path = $location.path().substr(1);
+            var token = this.setTokenFromString(path);
+            console.log('----> token:', token);
+            console.log('from OAUTH-NG go to ROOT');
+            // if the path has an access token, reroute to the root
+            if (path.match(/access_token=\w+/)) {
+                $location.path('/');
+                $location.replace();
+            }
         }
 
         //If hash is present in URL always use it, cuz its coming from oAuth2 provider redirect
@@ -60,6 +66,7 @@ accessTokenService.factory('AccessToken', function($rootScope, $location, $sessi
             setTokenFromSession();
         }
 
+        console.log('this.token:', this.token);
         return this.token;
     };
 
@@ -88,6 +95,7 @@ accessTokenService.factory('AccessToken', function($rootScope, $location, $sessi
      */
     service.setTokenFromString = function(hash){
         var params = getTokenFromString(hash);
+        console.log('---> params', params);
 
         if(params){
             removeFragment();
