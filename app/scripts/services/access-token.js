@@ -2,7 +2,7 @@
 
 var accessTokenService = angular.module('oauth.accessToken', ['ngStorage']);
 
-accessTokenService.factory('AccessToken', function($rootScope, $location, $sessionStorage, $interval){
+accessTokenService.factory('AccessToken', function($rootScope, $location, $localStorage, $interval){
 
     var service = {
             token: null
@@ -24,8 +24,25 @@ accessTokenService.factory('AccessToken', function($rootScope, $location, $sessi
      * - takes the token from the fragment URI
      * - takes the token from the sessionStorage
      */
-    service.set = function(){
-        this.setTokenFromString($location.hash());
+    service.set = function() {
+
+        // if html5mode ...
+        if ($location.$$html5) {
+            // ... set token from the hash
+            this.setTokenFromString($location.hash());
+
+        } else {
+            // ... else set it from the path
+            var path = $location.path().substr(1);
+            var token = this.setTokenFromString(path);
+
+            // if the path has an access token, reroute to the root
+            if (path.match(/access_token=\w+/)) {
+                $location.path('/');
+                $location.replace();
+            }
+
+        }
 
         //If hash is present in URL always use it, cuz its coming from oAuth2 provider redirect
         if(null === service.token){
@@ -40,7 +57,7 @@ accessTokenService.factory('AccessToken', function($rootScope, $location, $sessi
      * @returns {null}
      */
     service.destroy = function(){
-        delete $sessionStorage.token;
+        delete $localStorage.token;
         this.token = null;
         return this.token;
     };
@@ -78,8 +95,8 @@ accessTokenService.factory('AccessToken', function($rootScope, $location, $sessi
      * Set the access token from the sessionStorage.
      */
     var setTokenFromSession = function(){
-        if($sessionStorage.token){
-            var params = $sessionStorage.token;
+        if($localStorage.token){
+            var params = $localStorage.token;
             params.expires_at = new Date(params.expires_at);
             setToken(params);
         }
@@ -123,7 +140,7 @@ accessTokenService.factory('AccessToken', function($rootScope, $location, $sessi
      * Save the access token into the session
      */
     var setTokenInSession = function(){
-        $sessionStorage.token = service.token;
+        $localStorage.token = service.token;
     };
 
     /**
