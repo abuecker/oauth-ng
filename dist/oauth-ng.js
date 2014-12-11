@@ -1,4 +1,4 @@
-/* oauth-ng - v0.3.1 - 2014-11-06 */
+/* oauth-ng - v0.3.1 - 2014-12-11 */
 
 'use strict';
 
@@ -20,7 +20,7 @@ angular.module('oauth').config(['$locationProvider','$httpProvider',
 
 var accessTokenService = angular.module('oauth.accessToken', ['ngStorage']);
 
-accessTokenService.factory('AccessToken', function($rootScope, $location, $sessionStorage, $interval){
+accessTokenService.factory('AccessToken', function($rootScope, $location, $localStorage, $interval){
 
     var service = {
             token: null
@@ -75,7 +75,7 @@ accessTokenService.factory('AccessToken', function($rootScope, $location, $sessi
      * @returns {null}
      */
     service.destroy = function(){
-        delete $sessionStorage.token;
+        delete $localStorage.token;
         this.token = null;
         return this.token;
     };
@@ -113,8 +113,8 @@ accessTokenService.factory('AccessToken', function($rootScope, $location, $sessi
      * Set the access token from the sessionStorage.
      */
     var setTokenFromSession = function(){
-        if($sessionStorage.token){
-            var params = $sessionStorage.token;
+        if($localStorage.token){
+            var params = $localStorage.token;
             params.expires_at = new Date(params.expires_at);
             setToken(params);
         }
@@ -158,7 +158,7 @@ accessTokenService.factory('AccessToken', function($rootScope, $location, $sessi
      * Save the access token into the session
      */
     var setTokenInSession = function(){
-        $sessionStorage.token = service.token;
+        $localStorage.token = service.token;
     };
 
     /**
@@ -290,12 +290,12 @@ profileClient.factory('Profile', function($http, AccessToken, $rootScope) {
 
 var interceptorService = angular.module('oauth.interceptor', []);
 
-interceptorService.factory('ExpiredInterceptor', function ($rootScope, $q, $sessionStorage) {
+interceptorService.factory('ExpiredInterceptor', function ($rootScope, $q, $localStorage) {
 
   var service = {};
 
   service.request = function(config) {
-    var token = $sessionStorage.token;
+    var token = $localStorage.token;
 
     if (token && expired(token))
       $rootScope.$broadcast('oauth:expired', token);
